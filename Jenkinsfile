@@ -1,12 +1,20 @@
 pipeline {
     agent any
 
+    environment {
+        // Path to SonarScanner (adjust to your installation)
+        SONAR_SCANNER_HOME = "C:\\sonarscanner\\sonar-scanner-8.0.1.6346-windows-x64\\bin"
+        PATH = "${env.SONAR_SCANNER_HOME};${env.PATH}"
+    }
+
     tools {
-        gradle 'Gradle'
+        // Optional: if you have Gradle configured in Jenkins tools
+        // gradle 'Gradle' 
+        // Otherwise we use Gradle wrapper from project
     }
 
     stages {
-        stage('Checkout') {
+        stage('Checkout SCM') {
             steps {
                 checkout scm
             }
@@ -20,15 +28,15 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('SonarQube') {
+                withSonarQubeEnv('SonarQube') { // Name of your SonarQube server in Jenkins
                     bat """
-                    sonar-scanner ^
-                    -Dsonar.projectKey=gradle-demo ^
-                    -Dsonar.projectName=gradle-demo ^
-                    -Dsonar.sources=src/main/java ^
-                    -Dsonar.tests=src/test/java ^
-                    -Dsonar.java.binaries=build/classes ^
-                    -Dsonar.coverage.jacoco.xmlReportPaths=build/reports/jacoco/test/jacocoTestReport.xml
+                        ${env.SONAR_SCANNER_HOME}\\sonar-scanner.bat ^
+                        -Dsonar.projectKey=gradle-demo ^
+                        -Dsonar.projectName=gradle-demo ^
+                        -Dsonar.sources=src/main/java ^
+                        -Dsonar.tests=src/test/java ^
+                        -Dsonar.java.binaries=build/classes ^
+                        -Dsonar.coverage.jacoco.xmlReportPaths=build/reports/jacoco/test/jacocoTestReport.xml
                     """
                 }
             }
@@ -36,8 +44,17 @@ pipeline {
 
         stage('Archive Artifact') {
             steps {
-                archiveArtifacts artifacts: 'build/libs/*.jar'
+                archiveArtifacts artifacts: 'build/libs/*.jar', fingerprint: true
             }
+        }
+    }
+
+    post {
+        success {
+            echo "Pipeline completed successfully. JAR archived and SonarQube analysis done!"
+        }
+        failure {
+            echo "Pipeline failed. Check logs for details."
         }
     }
 }
