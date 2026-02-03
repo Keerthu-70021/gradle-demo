@@ -7,12 +7,6 @@ pipeline {
         PATH = "${env.SONAR_SCANNER_HOME};${env.PATH}"
     }
 
-    tools {
-        // Optional: if you have Gradle configured in Jenkins tools
-        // gradle 'Gradle' 
-        // Otherwise we use Gradle wrapper from project
-    }
-
     stages {
         stage('Checkout SCM') {
             steps {
@@ -22,6 +16,7 @@ pipeline {
 
         stage('Build & Test') {
             steps {
+                // Use Gradle wrapper from your project
                 bat 'gradlew.bat clean build jacocoTestReport'
             }
         }
